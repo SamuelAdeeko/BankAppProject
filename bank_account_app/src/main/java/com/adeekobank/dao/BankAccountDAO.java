@@ -12,18 +12,18 @@ public interface BankAccountDAO {
 
 	
 	public User userLogin(String username, String password) throws BusinessException;
-	public int createAccount(User user, long balance);
-	public Balance accountBalanceViewByCustomer(int userId, long accountNumber);
-	public Balance customerWithdrawal(long amount);
-	public Balance customerDeposit(long amount);
+	public int createAccount(Account account) throws BusinessException;
+	public int accountBalanceViewByCustomer(int userId, long accountNumber) throws BusinessException;
+	public int customerWithdrawal(Transaction transaction) throws BusinessException, ClassNotFoundException;
+	public int customerDeposit(Transaction transaction) throws ClassNotFoundException, BusinessException;
 	public void rejectInvalidTransactions(); 
 	public boolean accountStatusByEmployee(int employeeId);
-	public Account customerAccountViewByEmployee(int employeeId, int accountNumber);
-	public int registerForCustomerAccountByUser(String userName);
-	public Transaction transferMoneyToAnotherAccount(long amount, int accountNumber);
-	public Balance acceptTransferToCustomerAccount(long amount);
-	public int updateContact(int contact);
-	public int updateEmail(String email);
-	public int updatePassword(String password);
-	public List<User> viewAllUsers(int userId) throws BusinessException;
+	public void customerAccountViewByEmployee(int employeeId, long accountNumber) throws BusinessException;
+	public int registerForCustomerAccountByUser(int userId, User user ) throws BusinessException, ClassNotFoundException;
+	public int transferMoneyToAnotherAccount(Account account) throws BusinessException;
+	public int acceptTransferToCustomerAccount(Transaction transaction) throws ClassNotFoundException, BusinessException;
+	public int updateContact(int userID, long contact) throws BusinessException;
+	public int updateEmail(int userId, String email) throws BusinessException ;
+	public int updatePassword(int userId , String password) throws BusinessException;
+	public void viewAllUsers(int userId) throws BusinessException;
 }

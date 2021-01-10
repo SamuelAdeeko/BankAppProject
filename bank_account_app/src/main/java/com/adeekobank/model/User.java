@@ -11,7 +11,7 @@ public class User {
 	private String email;
 	private String password;
 	private String userType;
-	private int contact;
+	private long contact;
 	private Date dob;
 
 
@@ -20,7 +20,7 @@ public class User {
 	}
 
 	public User(int userId, String userName, String firstName, String lastName, String email, String password,
-			String userType, int contact, Date dob) {
+			String userType, long contact, Date dob) {
 		super();
 		this.userId = userId;
 		this.userName = userName;
@@ -104,11 +104,11 @@ public class User {
 	}
 	
 
-	public int getContact() {
+	public long getContact() {
 		return contact;
 	}
 
-	public void setContact(int contact) {
+	public void setContact(long contact) {
 		this.contact = contact;
 	}
 

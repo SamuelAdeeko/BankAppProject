@@ -2,18 +2,18 @@ package com.adeekobank.model;
 
 public class Transaction {
 	
-	private int transactionId;
+	private long transactionId;
 	private long amount;
-	private Account senderAccountNumber;
-	private int recieverAccountNumber;
-	private int transactionType;
+	private long senderAccountNumber;
+	private long recieverAccountNumber;
+	private String transactionType;
 
 	public Transaction() {
 		
 	}
 
-	public Transaction(int transactionId, long amount, Account senderAccountNumber, int recieverAccountNumber,
-			int transactionType) {
+	public Transaction(long transactionId, long amount, long senderAccountNumber, long recieverAccountNumber,
+			String transactionType) {
 		super();
 		this.transactionId = transactionId;
 		this.amount = amount;
@@ -22,11 +22,11 @@ public class Transaction {
 		this.transactionType = transactionType;
 	}
 
-	public int getTransactionId() {
+	public long getTransactionId() {
 		return transactionId;
 	}
 
-	public void setTransactionId(int transactionId) {
+	public void setTransactionId(long transactionId) {
 		this.transactionId = transactionId;
 	}
 
@@ -38,27 +38,27 @@ public class Transaction {
 		this.amount = amount;
 	}
 
-	public Account getSenderAccountNumber() {
+	public long getSenderAccountNumber() {
 		return senderAccountNumber;
 	}
 
-	public void setSenderAccountNumber(Account senderAccountNumber) {
+	public void setSenderAccountNumber(long senderAccountNumber) {
 		this.senderAccountNumber = senderAccountNumber;
 	}
 
-	public int getRecieverAccountNumber() {
+	public long getRecieverAccountNumber() {
 		return recieverAccountNumber;
 	}
 
-	public void setRecieverAccountNumber(int recieverAccountNumber) {
+	public void setRecieverAccountNumber(long recieverAccountNumber) {
 		this.recieverAccountNumber = recieverAccountNumber;
 	}
 
-	public int getTransactionType() {
+	public String getTransactionType() {
 		return transactionType;
 	}
 
-	public void setTransactionType(int transactionType) {
+	public void setTransactionType(String transactionType) {
 		this.transactionType = transactionType;
 	}
 
@@ -68,5 +68,7 @@ public class Transaction {
 				+ senderAccountNumber + ", recieverAccountNumber=" + recieverAccountNumber + ", transactionType="
 				+ transactionType + "]";
 	}
+
+	
 
 }
