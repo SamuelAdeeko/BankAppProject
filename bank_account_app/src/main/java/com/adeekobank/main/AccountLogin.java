@@ -55,7 +55,7 @@ public class AccountLogin {
 					System.out.println("8)All customer account view by Admin");
 					System.out.println("9)Customer withdrawal");
 					System.out.println("10)Customer deposit");
-					System.out.println("11)Register Customer by User");
+					System.out.println("11)Register for Customer account by User");
 					System.out.println("12)Transfer money to another account");
 					System.out.println("13)Recieve transafer in customer account");
 			
@@ -79,13 +79,7 @@ public class AccountLogin {
 							System.out.println("Account Id");
 							int actId= Integer.parseInt(scanner.nextLine());
 							Account newAccount = new Account(actNumber,userid, actType, startBalance, actId);
-							if(bankAccountServices.createAccount(newAccount) > 0) {
-								System.out.println("========================================");
-								System.out.println("Account created successfully");
-							} else {
-								System.out.println("Error processing your information");
-							}
-							
+							bankAccountServices.createAccount(newAccount);				
 			
 						} catch (Exception e) {
 							throw new BusinessException("Invalid account details");
@@ -174,10 +168,10 @@ public class AccountLogin {
 				//			if(login != null) {
 								System.out.println("case-6 was selected");
 								System.out.println("Customer account view by employee...");
-								System.out.println("Enter account number");
-								long actNumber = Long.parseLong(scanner.nextLine());
-								int userid = login.getUserId();
-								bankAccountServices.customerAccountViewByEmployee(userid, actNumber); 
+								int customerUserId = login.getUserId(); 
+								System.out.println("Employee Id Number");
+								int employeeId = Integer.parseInt(scanner.nextLine());
+								bankAccountServices.customerAccountViewByEmployee(employeeId, customerUserId);
 									
 				//				} 
 							
@@ -195,8 +189,7 @@ public class AccountLogin {
 							System.out.println("Account Balance View By Customer...");
 							System.out.println("Enter account number");
 							long actNumber = Long.parseLong(scanner.nextLine());
-							int userid = login.getUserId();
-							bankAccountServices.accountBalanceViewByCustomer(userid, actNumber);
+							bankAccountServices.accountBalanceViewByCustomer(actNumber);
 						
 						}catch (BusinessException e) {
 							System.out.println(e);
@@ -227,14 +220,14 @@ public class AccountLogin {
 						System.out.println("customer withdrawal");
 						System.out.println("Input Transaction Id");
 						long transId = Long.parseLong(scanner.nextLine());
-						System.out.println("Input Amount");
+						System.out.println("Amount you want to withdraw");
 						long amount = Long.parseLong(scanner.nextLine());
-						System.out.println("Sender Account");
-						long senderAct = Long.parseLong(scanner.nextLine());
-						System.out.println("Reciever Account");
-						long recieverAct = Long.parseLong(scanner.nextLine());
-
-						Transaction withDrawal = new Transaction(transId,amount,senderAct,recieverAct,"withdrawal");
+						System.out.println("Account number to withdraw from...");
+						long customerAct = Long.parseLong(scanner.nextLine());
+//						System.out.println("Reciever Account");
+//						long recieverAct = Long.parseLong(scanner.nextLine());
+						long overlordAccount = 1234567890;
+						Transaction withDrawal = new Transaction(transId,amount,customerAct,overlordAccount,"withdrawal");
 						
 						bankAccountServices.customerWithdrawal(withDrawal);
 						} catch (ClassNotFoundException e) {
@@ -254,9 +247,10 @@ public class AccountLogin {
 						long amount = Long.parseLong(scanner.nextLine());
 						System.out.println("Sender Account");
 						long senderAct = Long.parseLong(scanner.nextLine());
-						System.out.println("Reciever Account");
-						long recieverAct = Long.parseLong(scanner.nextLine());						
-						Transaction deposit = new Transaction(transId,amount,senderAct,recieverAct,"deposit");
+//						System.out.println("Reciever Account");
+//						long recieverAct = Long.parseLong(scanner.nextLine());	
+						long overlordAccount = 1234567890;
+						Transaction deposit = new Transaction(transId,amount,senderAct,overlordAccount,"deposit");
 						
 						bankAccountServices.customerDeposit(deposit);
 						} catch (ClassNotFoundException e) {
@@ -270,27 +264,22 @@ public class AccountLogin {
 						try {
 						System.out.println("case-11 was selected");
 						System.out.println("Register for customer account by user");
-						System.out.println("Enter userId");
-						int newUserId = Integer.parseInt(scanner.nextLine());
-						System.out.println("Username");
-						String userName = scanner.nextLine();
-						System.out.println("First Name");
-						String firstName = scanner.nextLine();
-						System.out.println("Last Name");
-						String lastName = scanner.nextLine();
-						System.out.println("Email");
-						String email = scanner.nextLine();
-						System.out.println("Password");
-						String userPassword = scanner.nextLine();						
-						System.out.println("Contact Number");
-						long contactNumber = Long.parseLong(scanner.nextLine());
-						System.out.println("Date of Birth");
-						String dateFormat = "dd/MM/yyyy";
-						Date dob = new SimpleDateFormat(dateFormat).parse(scanner.nextLine());
-	
-						int userid = login.getUserId();
-						User newUser = new User(newUserId,userName,firstName,lastName,email,userPassword,"customer",contactNumber,dob);					
-						bankAccountServices.registerForCustomerAccountByUser(userid, newUser);
+						int customerUserId = login.getUserId(); 
+						System.out.println("Account Number");
+						long accountNumber = Long.parseLong(scanner.nextLine());
+						System.out.println("Account Type (Savings or Checking)");
+						String actType = scanner.nextLine();
+						System.out.println("Opening Balance");
+						long balance = Long.parseLong(scanner.nextLine());
+						System.out.println("Account Id");
+						int actId = Integer.parseInt(scanner.nextLine());
+						System.out.println("Enter User Id (Employee or Admin only)");
+						int standardUserId = Integer.parseInt(scanner.nextLine());
+//						System.out.println("Date of Birth");
+//						String dateFormat = "dd/MM/yyyy";
+//						Date dob = new SimpleDateFormat(dateFormat).parse(scanner.nextLine());
+						Account newCustomerAccount = new Account(accountNumber, customerUserId, actType, balance, actId);
+						bankAccountServices.registerForCustomerAccountByUser(standardUserId, newCustomerAccount);
 						} catch (Exception e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -341,6 +330,22 @@ public class AccountLogin {
 						}
 					
 							break;
+							
+//					case 14: 
+//						try {
+//						System.out.println("case-14 was selected");
+//						System.out.println("search for account number");
+//						System.out.println("Input Account Number");
+//						long actNumber = Long.parseLong(scanner.nextLine());					
+//						Account acctNo = new Account()
+//						
+//						bankAccountServices.acceptTransferToCustomerAccount(deposit);
+//						} catch (ClassNotFoundException e) {
+//							// TODO Auto-generated catch block
+//							e.printStackTrace();
+//						}
+//					
+//							break;
 					}
 						
 					} while (choice!= 15);

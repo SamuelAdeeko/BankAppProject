@@ -27,16 +27,22 @@ public class BankAccountServicesImpl implements BankAccountServices {
 
 	@Override
 	public int createAccount(Account account) throws BusinessException {
-		// TODO Auto-generated method stub
-		return 0;
+		int c = 0;
+		c = bankAccountDao.createAccount(account);
+		return c;
 	}
 
 
 
 	@Override
-	public int accountBalanceViewByCustomer(int userId, long accountNumber) throws BusinessException {
-		// TODO Auto-generated method stub
-		return 0;
+	public long accountBalanceViewByCustomer(long accountNumber) throws BusinessException {
+		long accountBalance = 0;
+		if (accountNumber >= 1000001 || accountNumber < 9999999) {
+			accountBalance = bankAccountDao.accountBalanceViewByCustomer(accountNumber);
+		} else {
+			System.out.println("Invalid user account number.");
+		}
+		return accountBalance;
 	}
 
 
@@ -44,12 +50,33 @@ public class BankAccountServicesImpl implements BankAccountServices {
 	@Override
 	public int customerWithdrawal(Transaction transaction) throws ClassNotFoundException, BusinessException {
 	int c = 0;  
-	
+		System.out.println("In customer withdrawal method");
 		long withdrawalAmt = transaction.getAmount();
-	
-		if(withdrawalAmt > 0) {
+		System.out.println("print withdrawal amt: " + withdrawalAmt);
+		long customerActNumber = transaction.getSenderAccountNumber();
+		System.out.println("print cust act number" + customerActNumber);
+		long recieverActNumber = transaction.getRecieverAccountNumber();
+		System.out.println("print reciever acct numb: " + recieverActNumber);
+		if(customerActNumber == bankAccountDao.searchAccountNumber(customerActNumber) && recieverActNumber == bankAccountDao.searchAccountNumber(recieverActNumber)) {
+			System.out.println("Account number found");
 			System.out.println("In service");
-			System.out.println("valid amount");
+		}
+		else {
+			System.out.println("In service....acct number not found");
+		}
+		long customerAccountBal = bankAccountDao.accountBalanceViewByCustomer(customerActNumber);
+		long overlordAccount = bankAccountDao.accountBalanceViewByCustomer(recieverActNumber);
+		System.out.println("Printing oerlord account balance: " + overlordAccount);
+		long newAccountBal = 0;
+		long overlordAccountBal = 0;
+		if(withdrawalAmt > 0 && withdrawalAmt <= customerAccountBal) {
+			System.out.println("In service");
+			System.out.println("valid withdrawal amount");
+			newAccountBal = customerAccountBal - withdrawalAmt;
+			overlordAccountBal = overlordAccount - withdrawalAmt;
+			bankAccountDao.updateAccountBal(customerActNumber, newAccountBal);
+			bankAccountDao.updateAccountBal(recieverActNumber, overlordAccountBal);
+			
 			c = bankAccountDao.customerWithdrawal(transaction);
 		} else {
 			System.out.println("Enter a valid amount");
@@ -60,20 +87,36 @@ public class BankAccountServicesImpl implements BankAccountServices {
 
 
 	@Override
-	public int customerDeposit(Transaction transaction) {
-		int c = 0;
+	public long customerDeposit(Transaction transaction) {
+		long c = 0;
 		long depositAmt = transaction.getAmount();
-		
+		long customerActNumber = transaction.getSenderAccountNumber();
+		long recieverActNumber = transaction.getRecieverAccountNumber();
 		if(depositAmt > 0) {
 			System.out.println("In service");
 			System.out.println("valid amount");
 			try {
+				if(customerActNumber == bankAccountDao.searchAccountNumber(customerActNumber) && recieverActNumber == bankAccountDao.searchAccountNumber(recieverActNumber)) {
+					System.out.println("Account number found");
+					System.out.println("In service");
+				}
+				else {
+					System.out.println("In service....acct number not found");
+				}
+				long customerAccountBal = bankAccountDao.accountBalanceViewByCustomer(customerActNumber);
+				long overlordAccount = bankAccountDao.accountBalanceViewByCustomer(recieverActNumber);
+				System.out.println("Printing oerlord account balance: " + overlordAccount);
+				long newAccountBal = 0;
+				long overlordAccountBal = 0;
+				newAccountBal = customerAccountBal + depositAmt;
+				overlordAccountBal = overlordAccount + depositAmt;
+				bankAccountDao.updateAccountBal(customerActNumber, newAccountBal);
+				bankAccountDao.updateAccountBal(recieverActNumber, overlordAccountBal);
+					
 				c = bankAccountDao.customerDeposit(transaction);
 			} catch (ClassNotFoundException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (BusinessException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		} else {
@@ -101,20 +144,34 @@ public class BankAccountServicesImpl implements BankAccountServices {
 
 
 	@Override
-	public void customerAccountViewByEmployee(int employeeId, long accountNumber) throws BusinessException {
-		// TODO Auto-generated method stub
+	public void customerAccountViewByEmployee(int employeeId, int userId) throws BusinessException {
+		
+		int verifyEmployeeId = bankAccountDao.checkUserType(employeeId);
+		System.out.println("print userId is :" + verifyEmployeeId);
+		int verifyUserId = bankAccountDao.checkUserType(userId);
+		System.out.println("print userId is :" + verifyUserId);
+		if(verifyEmployeeId >= 10 && verifyEmployeeId  <= 999  && verifyUserId >1000 && verifyUserId < 9999) {
+			bankAccountDao.customerAccountViewByEmployee(verifyEmployeeId, verifyUserId);
+		} else {
+			System.out.println("===================================================");
+			System.out.println("You are not authorized to view customer accounts.");
+			System.out.println("===================================================");
+		}
 		
 	}
 
 
 
 	@Override
-	public int registerForCustomerAccountByUser(int userId, User user) {
+	public int registerForCustomerAccountByUser(int standardUserId, Account account) {
 		int c = 0;
-		if(userId > 100 && userId < 106) {
+		int verifyUserId = bankAccountDao.checkUserType(standardUserId);
+		System.out.println("print userId is :" + verifyUserId);
+		
+		if(verifyUserId >= 5 && verifyUserId <= 999) {
 			try {
 				System.out.println("In service");
-				c = bankAccountDao.registerForCustomerAccountByUser(userId, user);
+				c = bankAccountDao.registerForCustomerAccountByUser(verifyUserId, account);
 			} catch (ClassNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -122,13 +179,15 @@ public class BankAccountServicesImpl implements BankAccountServices {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+		} else {
+			System.out.println("Not an authorized personnel.");
 		}
 		return c;
 	}
 
 
 
-	@Override
+	@Override // pending
 	public int transferMoneyToAnotherAccount(Account account) {
 		int c = 0;
 		if (account.getAccountNumber() > 1000000000 && account.getAccountNumber() < 2000000000) {
@@ -144,7 +203,7 @@ public class BankAccountServicesImpl implements BankAccountServices {
 
 
 
-	@Override
+	@Override  // pending
 	public int acceptTransferToCustomerAccount(Transaction transaction) throws ClassNotFoundException, BusinessException {
 		int c = 0;
 		
@@ -201,6 +260,31 @@ public class BankAccountServicesImpl implements BankAccountServices {
 			} catch (BusinessException e) {
 				throw new BusinessException("Contact SYSTEM ADMINSTRATOR");
 			}
+	}
+
+
+
+	@Override
+	public long searchAccountNumber(long accountNumber) {
+		long c = bankAccountDao.searchAccountNumber(accountNumber);
+		return c;
+	}
+
+
+
+	@Override
+	public void updateAccountBal(long accountNumber, long balance) throws BusinessException {
+		bankAccountDao.updateAccountBal(accountNumber, balance);
+		
+	}
+
+
+
+	@Override
+	public int checkUserType(int userId) {
+		
+		int checkUserIdType = bankAccountDao.checkUserType(userId);
+		return checkUserIdType;
 	}
 
 
