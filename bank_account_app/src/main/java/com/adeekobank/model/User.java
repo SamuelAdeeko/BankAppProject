@@ -1,10 +1,10 @@
 package com.adeekobank.model;
 
-import java.util.Date;
+import java.sql.Date;
 
 public class User {
 	
-	private int userId;
+	private long userId;
 	private String userName;
 	private String firstName;
 	private String lastName;
@@ -12,15 +12,25 @@ public class User {
 	private String password;
 	private String userType;
 	private long contact;
-	private Date dob;
-
-
+	private String dob;
+	private String streetAddress;
+	private String city;
+	private String state;
+	private long zipCode;
+	private String country;
+	
+	
 	public User() {
 		super();
 	}
 
-	public User(int userId, String userName, String firstName, String lastName, String email, String password,
-			String userType, long contact, Date dob) {
+
+
+
+
+	public User(long userId, String userName, String firstName, String lastName, String email, String password,
+			String userType, long contact, String dob, String streetAddress, String city, String state, long zipCode,
+			String country) {
 		super();
 		this.userId = userId;
 		this.userName = userName;
@@ -31,10 +41,18 @@ public class User {
 		this.userType = userType;
 		this.contact = contact;
 		this.dob = dob;
+		this.streetAddress = streetAddress;
+		this.city = city;
+		this.state = state;
+		this.zipCode = zipCode;
+		this.country = country;
 	}
 
 
-	public int getUserId() {
+
+
+
+	public long getUserId() {
 		return userId;
 	}
 
@@ -102,31 +120,84 @@ public class User {
 	public void setUserType(String userType) {
 		this.userType = userType;
 	}
-	
+
 
 	public long getContact() {
 		return contact;
 	}
 
+
 	public void setContact(long contact) {
 		this.contact = contact;
 	}
 
-	public Date getDob() {
+
+	public String getDob() {
 		return dob;
 	}
 
-	public void setDob(Date dob) {
+
+	public void setDob(String dob) {
 		this.dob = dob;
 	}
+
+
+	public String getStreetAddress() {
+		return streetAddress;
+	}
+
+
+	public void setStreetAddress(String streetAddress) {
+		this.streetAddress = streetAddress;
+	}
+
+
+	public String getCity() {
+		return city;
+	}
+
+
+	public void setCity(String city) {
+		this.city = city;
+	}
+
+
+	public String getState() {
+		return state;
+	}
+
+
+	public void setState(String state) {
+		this.state = state;
+	}
+
+
+	public long getZipCode() {
+		return zipCode;
+	}
+
+
+	public void setZipCode(long zipCode) {
+		this.zipCode = zipCode;
+	}
+
+
+	public String getCountry() {
+		return country;
+	}
+
+
+	public void setCountry(String country) {
+		this.country = country;
+	}
+
 
 	@Override
 	public String toString() {
 		return "User [userId=" + userId + ", userName=" + userName + ", firstName=" + firstName + ", lastName="
 				+ lastName + ", email=" + email + ", password=" + password + ", userType=" + userType + ", contact="
-				+ contact + ", dob=" + dob + "]";
+				+ contact + ", dob=" + dob + ", streetAddress=" + streetAddress + ", city=" + city + ", state=" + state
+				+ ", zipCode=" + zipCode + ", country=" + country + "]";
 	}
-
-	
 
 }

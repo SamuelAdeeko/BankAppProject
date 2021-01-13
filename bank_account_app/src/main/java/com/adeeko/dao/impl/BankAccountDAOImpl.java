@@ -1,39 +1,36 @@
 package com.adeeko.dao.impl;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
 
 import com.adeekobank.dao.BankAccountDAO;
 import com.adeekobank.dbutil.PostgresqlConnection;
 import com.adeekobank.exception.BusinessException;
 import com.adeekobank.model.Account;
-import com.adeekobank.model.Balance;
 import com.adeekobank.model.Transaction;
 import com.adeekobank.model.User;
 
-public class BankAccountDAOImpl implements BankAccountDAO {
+import log4j_adeekobank.service.AdeekoBankLogService;
 
+public class BankAccountDAOImpl implements BankAccountDAO {
+	AdeekoBankLogService service = new AdeekoBankLogService();
+	
 	@Override  //works
 	public User userLogin(String username, String password) throws BusinessException {
 		User user = null;
 		
 	try(Connection connection = PostgresqlConnection.getConnection()) {
-		String sql = "select userid, firstname, lastname, email, usertype, contact from adeekobank.users where username = ? AND password = ? ";
+		String sql = "select userid, username, firstname, lastname, email, password, usertype, contact from adeekobank.users where username = ? AND password = ? ";
 		PreparedStatement preparedStatement = connection.prepareStatement(sql);
 		preparedStatement.setString(1, username);
 		preparedStatement.setString(2, password);
 		ResultSet resultSet = preparedStatement.executeQuery();
 	
 		if(resultSet.next()) {
-			System.out.println("In DAO");
 			user = new User();
-			user.setUserName(username);
-			user.setPassword(password);
+			user.setUserName(resultSet.getString("username"));
+			user.setPassword(resultSet.getString("password"));
 			user.setUserId(resultSet.getInt("userid"));
 			user.setFirstName(resultSet.getString("firstname"));
 			user.setLastName(resultSet.getString("lastname"));
@@ -42,33 +39,59 @@ public class BankAccountDAOImpl implements BankAccountDAO {
 			user.setContact(resultSet.getInt("contact"));
 			
 		} else {
-			System.out.println("========================================");
-			System.out.println("Username and passowrd does not exist.");
-			System.out.println("========================================");
+			service.servicelog("========================================");
+			service.servicelog("Username and passowrd does not exist.");
+			service.servicelog("========================================");
 		}
 	} catch (ClassNotFoundException | SQLException e) {
-		System.out.println("========================================");
+		service.servicelog("========================================");
 		throw new BusinessException("Invalid User, contact SYS Admin");	
 	} 
 		
 		return user;
 	}
 	
-	@Override    //works
-	public int createAccount(Account account) throws BusinessException {
+	@Override  
+	public int createAccount(User user, Account account) throws BusinessException {
 		int c = 0;
+		
+		// insert into account table data and user table....
+		// I used PreparedStatement to insert into account and user tables in the same method
 		try(Connection connection = PostgresqlConnection.getConnection()) {
 			String sql = "insert into adeekobank.accounts (accountnumber, userid, accounttype,balance, account_id) values ( ?, ? , ?,?,? )" ;
 			PreparedStatement preparedStatement = connection.prepareStatement(sql);
 			
 			preparedStatement.setLong(1, account.getAccountNumber());
-			preparedStatement.setInt(2, account.getUserId());
+			preparedStatement.setLong(2, account.getUserId());
 			preparedStatement.setString(3, account.getAccountType());
 			preparedStatement.setLong(4, account.getBalance());
-			preparedStatement.setInt(5, account.getAccount_id());
-			c = preparedStatement.executeUpdate();
-			System.out.println("Update executed");
+			preparedStatement.setLong(5, account.getAccount_id());
+			preparedStatement.executeUpdate();
+			// end of update in account table
+			
+			String sql1 = "insert into adeekobank.users (userid, username, firstname, lastname, email, password, usertype, contact, dob, streetAddress, city, state, country, zip_code) values ( ?, ? , ?,?,?,?,?,?,?,?,?,?,?,? )";
+			PreparedStatement preparedStatement1 = connection.prepareStatement(sql1);
+			preparedStatement1.setLong(1, user.getUserId());
+			preparedStatement1.setString(2, user.getUserName());
+			preparedStatement1.setString(3, user.getFirstName());
+			preparedStatement1.setString(4, user.getLastName());
+			preparedStatement1.setString(5, user.getEmail());
+			preparedStatement1.setString(6, user.getPassword());
+			preparedStatement1.setString(7, user.getUserType());
+			preparedStatement1.setLong(8, user.getContact());
+			preparedStatement1.setString(9, user.getDob()); 		
+			preparedStatement1.setString(10, user.getStreetAddress());
+			preparedStatement1.setString(11, user.getCity());
+			preparedStatement1.setString(12, user.getState());
+			preparedStatement1.setString(13, user.getCountry());
+			preparedStatement1.setLong(14, user.getZipCode());
+			preparedStatement1.executeUpdate();
+			// end of update into user table
+			service.servicelog("========================================");
+			service.servicelog("User Profile And Account Created Successfully.");
+			service.servicelog("========================================");
 		} catch (ClassNotFoundException | SQLException e) {
+			e.printStackTrace();
 			throw new BusinessException("Invalid operation, contact SYS Admin");
 		} 
 		
@@ -77,8 +100,8 @@ public class BankAccountDAOImpl implements BankAccountDAO {
 
 
 	@Override  //works
-	public int customerWithdrawal(Transaction transaction) throws BusinessException, ClassNotFoundException {
-		int c = 0;
+	public long customerWithdrawal(Transaction transaction) throws BusinessException, ClassNotFoundException {
+		long c = 0;
 		try (Connection connection = PostgresqlConnection.getConnection()) {
 			String sql = "insert into adeekobank.transactions (transactionid, amount, senderaccountnumber, recieveraccountnumber, transactiontype) values ( ?,?,?,?,? )";
 			PreparedStatement preparedStatement = connection.prepareStatement(sql);
@@ -88,10 +111,8 @@ public class BankAccountDAOImpl implements BankAccountDAO {
 			preparedStatement.setLong(4, transaction.getRecieverAccountNumber());
 			preparedStatement.setString(5, transaction.getTransactionType());
 			c = preparedStatement.executeUpdate();
-			System.out.println("Query executed");
 
 		} catch (SQLException e) {
-			e.printStackTrace();
 			throw new BusinessException("Internal error occured, Contact SYS Admin");
 		} 
 		
@@ -110,10 +131,8 @@ public class BankAccountDAOImpl implements BankAccountDAO {
 			preparedStatement.setLong(4, transaction.getRecieverAccountNumber());
 			preparedStatement.setString(5, transaction.getTransactionType());
 			c = preparedStatement.executeUpdate();
-			System.out.println("Query executed");
 
 		} catch (SQLException e) {
-			e.printStackTrace();
 			throw new BusinessException("Internal error occured, Contact SYS Admin");
 		} 
 		
@@ -129,58 +148,46 @@ public class BankAccountDAOImpl implements BankAccountDAO {
 			PreparedStatement preparedStatement = connection.prepareStatement(sql);
 			preparedStatement.setLong(1, accountNumber);
 			ResultSet resultSet = preparedStatement.executeQuery();
-			System.out.println("Query executed");
 			while(resultSet.next()) {
-//				System.out.println("Account Number: " + accountNumber);
-//				System.out.println("User id: " + userId);
-//				System.out.println("Account Type: " + resultSet.getString("accounttype"));
-				System.out.println("Balance: " + resultSet.getLong("balance"));
-	//			System.out.println("Account Id: " + resultSet.getInt("account_id"));
+				service.servicelog("========================================");
+				service.servicelog("Your account Balance of: " + resultSet.getLong("balance"));
 				c = resultSet.getLong("balance");
-		
 			} 
 		} catch (SQLException | ClassNotFoundException e) {
-			throw new BusinessException("Invalid account number");
+		
+			throw new BusinessException("Internal error occured, contact SYS Admin");
 		} 
 		return c;
 	}
 
-	
 
 	@Override
-	public void rejectInvalidTransactions() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public boolean accountStatusByEmployee(int employeeId) {
+	public boolean accountStatusByEmployee(long employeeId) {
 		// TODO Auto-generated method stub
 		return false;
 	}
 	
 
 	@Override   // works
-	public void customerAccountViewByEmployee(int employeeId, int userId) throws BusinessException {
+	public void customerAccountViewByEmployee(long employeeId, long userId) throws BusinessException {
 		
 		
 		try (Connection connection= PostgresqlConnection.getConnection()){
 		String sql = "select accountnumber, userid, accounttype, balance, account_id from adeekobank.accounts where userid = ? ";
 		PreparedStatement preparedStatement = connection.prepareStatement(sql);
-		preparedStatement.setInt(1, userId);
+		preparedStatement.setLong(1, userId);
 		ResultSet resultset = preparedStatement.executeQuery();
-		System.out.println("Query executed");
 		while(resultset.next()) {
-			System.out.println("========================================");
-			System.out.println("Account Number: " + resultset.getLong("accountnumber"));
-			System.out.println("UserId: "+ resultset.getInt("userid"));
-			System.out.println("Account Type: " + resultset.getString("accounttype"));
-			System.out.println("Account Balance: " + resultset.getLong("balance"));
-			System.out.println("Account Id: " + resultset.getInt("account_id"));
-			System.out.println("========================================");
+			service.servicelog("========================================");
+			service.servicelog("Account Number: " + resultset.getLong("accountnumber"));
+			service.servicelog("UserId: "+ resultset.getInt("userid"));
+			service.servicelog("Account Type: " + resultset.getString("accounttype"));
+			service.servicelog("Account Balance: " + resultset.getLong("balance"));
+			service.servicelog("Account Id: " + resultset.getInt("account_id"));
+			service.servicelog("========================================");
 		} 
 		} catch ( SQLException | ClassNotFoundException e) {
-			System.out.println("====================================================");
+			service.servicelog("====================================================");
 			throw new BusinessException("Invalid account number. Contact SYS Admin");
 		}
 	
@@ -189,56 +196,49 @@ public class BankAccountDAOImpl implements BankAccountDAO {
 
 	
 	@Override // edit to remove user argument and replace with account ref type
-    public int registerForCustomerAccountByUser(int standardUserId, Account account) throws BusinessException, ClassNotFoundException {
+    public int registerForCustomerAccountByUser(long standardUserId, Account account) throws BusinessException, ClassNotFoundException {
 		int c = 0;
 		try(Connection connection = PostgresqlConnection.getConnection()) {
 			String sql = "insert into adeekobank.accounts (accountnumber, userid, accounttype, balance, account_id) values (?,?,?,?,?)";
 			PreparedStatement preparedStatement = connection.prepareStatement(sql);
 			preparedStatement.setLong(1, account.getAccountNumber());
-			preparedStatement.setInt(2, account.getUserId());
+			preparedStatement.setLong(2, account.getUserId());
 			preparedStatement.setString(3, account.getAccountType());
 			preparedStatement.setLong(4, account.getBalance());
-			preparedStatement.setInt(5, account.getAccount_id());
+			preparedStatement.setLong(5, account.getAccount_id());
 	//	preparedStatement.setDate(9, new java.sql.Date(user.getDob().getTime()));
 			c = preparedStatement.executeUpdate();
-			System.out.println("Query executed"); 
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 			throw new BusinessException("Error occured, Contact SYS Admin");
 		}
 		return c;
 	}
 
 	@Override  //works
-	public int transferMoneyToAnotherAccount(Account account) throws BusinessException {
-		int c = 0;
+	public long transferMoneyToAnotherAccount(Transaction transaction) throws BusinessException {
+		long c = 0;
 		
 		try(Connection connection = PostgresqlConnection.getConnection()) {
-			String sql = "insert into adeekobank.accounts (accountnumber,userid,accounttype,balance,account_id) values ( ?,?,?,?,?) ";
+			String sql = "insert into adeekobank.transactions (transactionid, amount, senderaccountnumber, recieveraccountnumber, transactiontype) values ( ?,?,?,?,? )";
 			PreparedStatement preparedStatement = connection.prepareStatement(sql);
-			preparedStatement.setLong(1, account.getAccountNumber());
-			preparedStatement.setInt(2, account.getUserId());
-			preparedStatement.setString(3, account.getAccountType());
-			preparedStatement.setLong(4, account.getBalance());
-			preparedStatement.setInt(5, account.getAccount_id());
+			preparedStatement.setLong(1, transaction.getTransactionId() );
+			preparedStatement.setLong(2, transaction.getAmount());
+			preparedStatement.setLong(3, transaction.getSenderAccountNumber());
+			preparedStatement.setLong(4, transaction.getRecieverAccountNumber());
+			preparedStatement.setString(5, transaction.getTransactionType());
 			c = preparedStatement.executeUpdate();
-			System.out.println("Query executed");
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (ClassNotFoundException | SQLException e) {
+			
 			throw new BusinessException("Internal error, contact SYS Admin");
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
     
 		return c;
 	}
+	
 
 	@Override
-	public int acceptTransferToCustomerAccount(Transaction transaction ) throws ClassNotFoundException, BusinessException{
-		int c = 0;
+	public long acceptTransferToCustomerAccount(Transaction transaction ) throws ClassNotFoundException, BusinessException{
+		long c = 0;
 		try (Connection connection = PostgresqlConnection.getConnection()) {
 			String sql = "insert into adeekobank.transactions (transactionid, amount, senderaccountnumber, recieveraccountnumber, transactiontype) values ( ?,?,?,?,? )";
 			PreparedStatement preparedStatement = connection.prepareStatement(sql);
@@ -248,10 +248,8 @@ public class BankAccountDAOImpl implements BankAccountDAO {
 			preparedStatement.setLong(4, transaction.getRecieverAccountNumber());
 			preparedStatement.setString(5, transaction.getTransactionType());
 			c = preparedStatement.executeUpdate();
-			System.out.println("Query executed");
 
 		} catch (SQLException e) {
-			e.printStackTrace();
 			throw new BusinessException("Internal error occured, Contact SYS Admin");
 		} 
 		
@@ -259,33 +257,37 @@ public class BankAccountDAOImpl implements BankAccountDAO {
 	}
 
 	@Override  //works
-	public int updateContact(int userID, long contact) throws BusinessException {
+	public int updateContact(long userID, long contact) throws BusinessException {
 		int c = 0;
 		try(Connection connection = PostgresqlConnection.getConnection()) {
 			String sql = "update adeekobank.users set contact = ? where userid = ?";
 			PreparedStatement preparedStatement = connection.prepareStatement(sql);
 			preparedStatement.setLong(1, contact);
-			preparedStatement.setInt(2, userID);
+			preparedStatement.setLong(2, userID);
 			c = preparedStatement.executeUpdate();
-			
+			service.servicelog("========================================");
+			service.servicelog("Contact number updated successfully.");
+			service.servicelog("========================================");
 		} catch (SQLException | ClassNotFoundException  e) {
-			System.out.println("========================================");
+			service.servicelog("========================================");
 			throw new BusinessException("Invalid contact number");	
 		} return c;	
 	}
 
 	@Override  //works
-	public int updateEmail(int userId, String email) throws BusinessException {
+	public int updateEmail(long userId, String email) throws BusinessException {
 		int c = 0;
 		try(Connection connection = PostgresqlConnection.getConnection()) {
 			String sql = "update adeekobank.users set email = ? where userid = ?";
 			PreparedStatement preparedStatement = connection.prepareStatement(sql);
 			preparedStatement.setString(1, email);
-			preparedStatement.setInt(2, userId);
+			preparedStatement.setLong(2, userId);
 			c = preparedStatement.executeUpdate();
-			
+			service.servicelog("========================================");
+			service.servicelog("Email updated successfully.");
+			service.servicelog("========================================");
 		} catch (SQLException | ClassNotFoundException  e) {
-			System.out.println("========================================");
+			service.servicelog("========================================");
 			throw new BusinessException("Invalid email address");	
 		} return c;	
 	}
@@ -293,83 +295,66 @@ public class BankAccountDAOImpl implements BankAccountDAO {
 	
 
 	@Override   // works
-	public int updatePassword(int userId, String password) throws BusinessException {
+	public int updatePassword(long userId, String password) throws BusinessException {
 		int c = 0;
 		try(Connection connection = PostgresqlConnection.getConnection()) {
 			String sql = "update adeekobank.users set password = ? where userid = ?";
 			PreparedStatement preparedStatement = connection.prepareStatement(sql);
 			preparedStatement.setString(1, password);
-			preparedStatement.setInt(2, userId);
+			preparedStatement.setLong(2, userId);
 			c = preparedStatement.executeUpdate();
-			
+			service.servicelog("========================================");
+			service.servicelog("Password Updated successfully.");
+			service.servicelog("========================================");
 		} catch (SQLException | ClassNotFoundException  e) {
-			System.out.println("========================================");
+			service.servicelog("========================================");
 			throw new BusinessException("Invalid email address");	
-		} return c;	
+		} 
+		return c;	
 	}
 
 
 	@Override  // works
-	public void viewAllUsers(int userId) throws BusinessException {
+	public void viewAllUsers(long userId) throws BusinessException {
 
 		try(Connection connection = PostgresqlConnection.getConnection()) {
 			String sql = "select userid, username, firstname, lastname, email, password, usertype, contact from adeekobank.users";
 			PreparedStatement preparedStatement = connection.prepareStatement(sql);
 			ResultSet resultSet = preparedStatement.executeQuery();
-			System.out.println("Query executed");
 			while(resultSet.next()) {
-				System.out.println("UserId: " + resultSet.getInt("userid"));
-				System.out.println("Username: " + resultSet.getString("username"));
-				System.out.println("Firstname: " + resultSet.getString("firstname"));
-				System.out.println("Lastname: " + resultSet.getString("lastname"));
-				System.out.println("Email: " + resultSet.getString("email"));
-				System.out.println("Password: " + resultSet.getString("password"));
-				System.out.println("User type: " + resultSet.getString("usertype"));
-				System.out.println("Contact Number: " + resultSet.getLong("contact"));
+				service.servicelog("UserId: " + resultSet.getInt("userid"));
+				service.servicelog("Username: " + resultSet.getString("username"));
+				service.servicelog("Firstname: " + resultSet.getString("firstname"));
+				service.servicelog("Lastname: " + resultSet.getString("lastname"));
+				service.servicelog("Email: " + resultSet.getString("email"));
+				service.servicelog("Password: " + resultSet.getString("password"));
+				service.servicelog("User type: " + resultSet.getString("usertype"));
+				service.servicelog("Contact Number: " + resultSet.getLong("contact"));
 				
-				
-//				User user = new User();
-//				user.setUserId(resultSet.getInt("userid")));
-//				user.setUserName(resultSet.getString("username"));
-//				user.setFirstName(resultSet.getString("firstname"));
-//				user.setLastName(resultSet.getString("lastname"));
-//				user.setEmail(resultSet.getString("email"));
-//				user.setPassword(resultSet.getString("password"));
-//				user.setUserType(resultSet.getString("usertype"));
-//				user.setContact(resultSet.getInt("contact"));
-//				usersList.add(user);
 			}
 			
 		} catch (ClassNotFoundException | SQLException e) {
-			System.out.println("======================================================");
-			System.out.println(e);
+			service.servicelog("======================================================");
 			throw new BusinessException("Internal error occured, contact SYS Admin");
-			
 		}
 	}
 
 	@Override
-	public long searchAccountNumber(long accountNumber) {
+	public long searchAccountNumber(long accountNumber) throws BusinessException {
 		long c = 0;
 		try(Connection connection = PostgresqlConnection.getConnection()) {
 			String sql = "select accountnumber, userid,accounttype,balance,account_id from adeekobank.accounts where accountnumber = ? ";
 			PreparedStatement preparedStatement = connection.prepareStatement(sql);
 			preparedStatement.setLong(1, accountNumber);
 			ResultSet resultSet = preparedStatement.executeQuery();
-			System.out.println("Query executed in DAO");
 			if(resultSet.next()) {
-				System.out.println("Account Number: " + resultSet.getLong("accountnumber"));
 				c = resultSet.getLong("accountnumber");
 			} else {
-				System.out.println("Account number not found");
+				service.servicelog("Account number not found");
 			}
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		} catch (ClassNotFoundException | SQLException e) {
+			throw new BusinessException("Internal error occured, contact SYS Admin");
+		} 
 		
 		return c;
 	}
@@ -383,9 +368,7 @@ public class BankAccountDAOImpl implements BankAccountDAO {
 			preparedStatement.setLong(1, balance);
 			preparedStatement.setLong(2, accountNumber);
 			preparedStatement.executeUpdate();
-			System.out.println("Updated new account bal executed");
 		} catch (ClassNotFoundException | SQLException e) {
-			e.printStackTrace();
 			throw new BusinessException("Invalid operation, contact SYS Admin");
 		} 
 		
@@ -393,46 +376,61 @@ public class BankAccountDAOImpl implements BankAccountDAO {
 	}
 
 	@Override
-	public int checkUserType(int userId) {
+	public long checkUserType(long userId) throws BusinessException {
 		int c = 0;
 		try(Connection connection = PostgresqlConnection.getConnection()) {
 			String sql = "select userid, username, firstname, lastname, email, password, usertype, contact from adeekobank.users where userid = ?";
 			PreparedStatement preparedStatement = connection.prepareStatement(sql);
-			preparedStatement.setInt(1, userId);
+			preparedStatement.setLong(1, userId);
 			ResultSet resultSet = preparedStatement.executeQuery();
-			System.out.println("Query executed");
 			if(resultSet.next()) {
 				c = resultSet.getInt("userid");
 			} else {
-				System.out.println("No record for userId found.");
+				service.servicelog("No record for userId found.");
 			}
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		} catch (ClassNotFoundException |SQLException e) {
+			throw new BusinessException("Invalid operation, contact SYS Admin");
+		} 
 		return c;
 	}
 
-
-	
-	
-	
-
-	
-
-	
-	
-
-	
-	
-
-
-
-	
-
+	@Override
+	public long allCustomerTransaction(long accountNumber) throws BusinessException {
+		long c = 0;
+		try (Connection connection = PostgresqlConnection.getConnection()){
+			// Queries the database for account number in sender account number column
+			// preparedStatement.setLong(1, accountNumber) passes account number into the parameter to query
+			String sql = "select transactionid, amount, senderaccountnumber, recieveraccountnumber, transactiontype from adeekobank.transactions where recieveraccountnumber = ? ";
+			PreparedStatement preparedStatement = connection.prepareStatement(sql);
+			preparedStatement.setLong(1, accountNumber);
+			ResultSet resultSet = preparedStatement.executeQuery();
+			while(resultSet.next()) {
+				System.out.println("Transaction Id: " + resultSet.getLong("transactionid"));
+				System.out.println("Amount: " + resultSet.getLong("amount"));
+				System.out.println("senderaccountnumber: " + resultSet.getLong("senderaccountnumber"));
+				System.out.println("recieveraccountnumber: " + resultSet.getLong("recieveraccountnumber"));
+				System.out.println("transactiontype: " + resultSet.getString("transactiontype"));
+			} 
+			// Queries the database for account number in sender account number column
+			String sql1 = "select transactionid, amount, senderaccountnumber, recieveraccountnumber, transactiontype from adeekobank.transactions where senderaccountnumber = ? ";
+			PreparedStatement preparedStatement1 = connection.prepareStatement(sql1);
+			preparedStatement1.setLong(1, accountNumber);
+			ResultSet resultSet1 = preparedStatement1.executeQuery();
+			
+			while(resultSet1.next()) {
+				service.servicelog("Transaction Id: " + resultSet1.getLong("transactionid"));
+				service.servicelog("Amount: " + resultSet1.getLong("amount"));
+				service.servicelog("senderaccountnumber: " + resultSet1.getLong("senderaccountnumber"));
+				service.servicelog("recieveraccountnumber: " + resultSet1.getLong("recieveraccountnumber"));
+				service.servicelog("transactiontype: " + resultSet1.getString("transactiontype"));
+			} 
+			
+			
+		} catch (SQLException | ClassNotFoundException e) {
+			throw new BusinessException("Internal error, contact SYS Admin");
+		} 
+		return c;
+	}
 
 	
 

@@ -3,15 +3,15 @@ package com.adeekobank.model;
 public class Account {
 
 	private long accountNumber;
-	private int userId;
+	private long userId;
 	private String accountType;
 	private long balance;
-	private int account_id;
+	private long account_id;
 	
 	public Account() {
 	}
 
-	public Account(long accountNumber, int userId, String accountType, long balance, int account_id) {
+	public Account(long accountNumber, long userId, String accountType, long balance, long account_id) {
 		super();
 		this.accountNumber = accountNumber;
 		this.userId = userId;
@@ -28,11 +28,11 @@ public class Account {
 		this.accountNumber = accountNumber;
 	}
 
-	public int getUserId() {
+	public long getUserId() {
 		return userId;
 	}
 
-	public void setUserId(int userId) {
+	public void setUserId(long userId) {
 		this.userId = userId;
 	}
 
@@ -52,11 +52,11 @@ public class Account {
 		this.balance = balance;
 	}
 
-	public int getAccount_id() {
+	public long getAccount_id() {
 		return account_id;
 	}
 
-	public void setAccount_id(int account_id) {
+	public void setAccount_id(long account_id) {
 		this.account_id = account_id;
 	}
 
